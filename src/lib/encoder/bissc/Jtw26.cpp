@@ -25,8 +25,6 @@ IRAM_ATTR bool Jtw26::readEnc(uint32_t &position) {
   uint8_t  encWrn = 0;
   uint8_t  encCrc = 0;
 
-  uint32_t encTurns = 0;
-
   // prepare for a reading
   position = 0;
 
@@ -139,15 +137,14 @@ IRAM_ATTR bool Jtw26::readEnc(uint32_t &position) {
     return false;
   } else good++;
 
-  #if BISSC_SINGLE_TURN == ON
-    // extend negative to 32 bits
-    if (bitRead(position, 26)) { position |= 0b11111100000000000000000000000000; }
-  #else
-    // combine absolute and 8 low order bits of multi-turn count for a 32 bit count
-    position = position | ((encTurns & 0b0000111111) << 26);
-  #endif
+  // extend negative to 32 bits
+  if (bitRead(position, 26)) { position |= 0b11111100000000000000000000000000; }
 
-  position += origin;
+  #ifdef JTW_26BIT_AS_24BIT
+    position += origin*4L;
+  #else
+    position += origin;
+  #endif
 
   #if BISSC_SINGLE_TURN == ON
     if ((int32_t)position > 67108864) position -= 67108864;
@@ -155,6 +152,10 @@ IRAM_ATTR bool Jtw26::readEnc(uint32_t &position) {
   #endif
 
   position -= 33554432;
+
+  #ifdef JTW_26BIT_AS_24BIT
+    position = (int32_t)position/4L;
+  #endif
 
   return true;
 }
