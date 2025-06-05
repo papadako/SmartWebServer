@@ -21,11 +21,11 @@
 #define OPERATIONAL_MODE             WIFI //   WIFI, Or use ETHERNET_W5100 or ETHERNET_W5500                                 <-Req'd
 
 // SERIAL PORTS --------------------------------------------------------------------------------------------------------------------
-#define SERIAL_BAUD_DEFAULT        57600 //   9600, Common baud rates for this parameter are 9600,19200,57600,115200,etc.    Infreq
+#define SERIAL_BAUD_DEFAULT        115200 //   9600, Common baud rates for this parameter are 9600,19200,57600,115200,etc.    Infreq
                                           //         The OnStep serial port this is wired to must use the same rate above.
-#define SERIAL_BAUD                57600 // 115200, Or use 19200,57600,115200,230400,460800 (not all devices support > 115200)
+#define SERIAL_BAUD                115200 // 115200, Or use 19200,57600,115200,230400,460800 (not all devices support > 115200)
                                           //         (OnStep and here.)  Automatically uses 19200 if talking to a Mega2560 OnStep.
-#define SERIAL_SWAP                  OFF //   AUTO, Automatic check both, ON for swapped port or OFF for default port only.  Infreq
+#define SERIAL_SWAP                  AUTO //   AUTO, Automatic check both, ON for swapped port or OFF for default port only.  Infreq
                                           //         this option is ignored in ETHERNET modes
 
 // STATUS LED ----------------------------------------------------------------------------------------------------------------------
@@ -40,8 +40,7 @@
 #define DISPLAY_RESET_CONTROLS        OFF //    OFF, ON allows reset if supported, FWU for STM32 firmware upload pin HIGH.    Option
 
 #define DISPLAY_SERVO_MONITOR         ON //    OFF, ON to display the servo monitor for OnStepX (any axis.)                  Option
-#define DISPLAY_SERVO_ORIGIN_CONTROLS ON //    OFF, ON to display control to set the absolute encoder origin for servos.     Option
-#define DISPLAY_SERVO_CALIBRATION     ON //    OFF, ON to display the servo calibration controls for OnStepX (any axis.)     Option
+#define DISPLAY_SERVO_ORIGIN_CONTROLS OFF //    OFF, ON to display control to set the absolute encoder origin for servos.     Option
 
 // ENCODER SUPPORT -----------------------------------------------------------------------------------------------------------------
 // Some of these settings are stored in NV (EEPROM) as the default values when first uploaded.  Later changes below may be
