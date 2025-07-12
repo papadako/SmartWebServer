@@ -15,15 +15,15 @@ Pid::Pid(const float P, const float I, const float D, const float P_goto, const 
 void Pid::init(uint8_t axisNumber, ServoControl *control, float controlRange) {
   Feedback::init(axisNumber, control);
 
-  axisPrefix[8] = '0' + axisNumber;
+  axisPrefix[9] = '0' + axisNumber;
 
   p = param1;
   i = param2;
   d = param3;
   c = controlRange;
 
-  V(axisPrefix); VF("setting feedback with range +/-"); VL(controlRange);
-  V(axisPrefix); if (autoScaleParameters) { VL("using auto parameter scaling"); } else { VL("using manual parameter scaling"); } 
+  VF("MSG:"); V(axisPrefix); VF("setting feedback with range +/-"); VL(controlRange);
+  VF("MSG:"); V(axisPrefix); if (autoScaleParameters) { VL("using auto parameter scaling"); } else { VL("using manual parameter scaling"); } 
 
   pid = new QuickPID(&control->in, &control->out, &control->set,
                      0, 0, 0,
@@ -36,14 +36,23 @@ void Pid::init(uint8_t axisNumber, ServoControl *control, float controlRange) {
 
 // reset feedback control and parameters
 void Pid::reset() {
-  V(axisPrefix); VLF("reset");
+  VF("MSG:"); V(axisPrefix); VLF("reset");
   pid->SetMode(QuickPID::Control::manual);
   control->in = 0;
   control->set = 0;
   control->out = 0;
   pid->SetMode(QuickPID::Control::automatic);
-  trackingSelected = true;
-  selectSlewingParameters();
+  pid->SetMode(QuickPID::Control::manual);
+  pid->SetMode(QuickPID::Control::automatic);
+  trackingSelected = false;
+  parameterSelectPercent = 100;
+  p = param4;
+  i = param5;
+  d = param6;
+  pid->SetTunings(p, i, d);
+  lastP = p;
+  lastI = i;
+  lastD = d;
 }
 
 void Pid::setControlDirection(int8_t state) {
@@ -55,7 +64,7 @@ void Pid::selectTrackingParameters() {
   if (!trackingSelected) {
     pid->SetMode(QuickPID::Control::manual);
     pid->SetMode(QuickPID::Control::automatic);
-    V(axisPrefix); VL("tracking selected");
+    VF("MSG:"); V(axisPrefix); VL("tracking selected");
     trackingSelected = true;
   }
 }
@@ -65,7 +74,7 @@ void Pid::selectSlewingParameters() {
   if (trackingSelected) {
     pid->SetMode(QuickPID::Control::manual);
     pid->SetMode(QuickPID::Control::automatic);
-    V(axisPrefix); VL("slewing selected");
+    VF("MSG:"); V(axisPrefix); VL("slewing selected");
     trackingSelected = false;
     parameterSelectPercent = 100;
     p = param4;
@@ -87,7 +96,7 @@ void Pid::variableParameters(float percent) {
   i = param2 + (param5 - param2)*s;
   d = param3 + (param6 - param3)*s;
   if (lastP != p || lastI != i || lastD != d) {
-//    V(axisPrefix);
+//    VF("MSG:"); V(axisPrefix);
 //    V("variable parameters");
 //    V(" P="); V(p); V(", I="); V(i); V(", D="); VL(d);
     pid->SetTunings(p, i, d);

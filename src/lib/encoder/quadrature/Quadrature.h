@@ -1,7 +1,7 @@
 // A/B Quadrature encoders
 #pragma once
 
-#include "../Encoder.h"
+#include "../EncoderBase.h"
 
 #if AXIS1_ENCODER == AB || AXIS2_ENCODER == AB || AXIS3_ENCODER == AB || \
     AXIS4_ENCODER == AB || AXIS5_ENCODER == AB || AXIS6_ENCODER == AB || \
@@ -17,7 +17,7 @@
 class Quadrature : public Encoder {
   public:
     Quadrature(int16_t APin, int16_t BPin, int16_t axis);
-    void init();
+    bool init();
 
     int32_t read();
     void write(int32_t count);

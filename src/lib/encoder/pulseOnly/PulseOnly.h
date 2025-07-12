@@ -1,7 +1,7 @@
 // Pulse only encoders
 #pragma once
 
-#include "../Encoder.h"
+#include "../EncoderBase.h"
 
 #if AXIS1_ENCODER == PULSE_ONLY || AXIS2_ENCODER == PULSE_ONLY || AXIS3_ENCODER == PULSE_ONLY || \
     AXIS4_ENCODER == PULSE_ONLY || AXIS5_ENCODER == PULSE_ONLY || AXIS6_ENCODER == PULSE_ONLY || \
@@ -10,7 +10,7 @@
 class PulseOnly : public Encoder {
   public:
     PulseOnly(int16_t pulsePin, int16_t *direction, int16_t axis);
-    void init();
+    bool init();
 
     int32_t read();
     void write(int32_t count);

@@ -1,7 +1,7 @@
 // Pulse only encoders
 #pragma once
 
-#include "../Encoder.h"
+#include "../EncoderBase.h"
 
 #if AXIS1_ENCODER == VIRTUAL || AXIS2_ENCODER == VIRTUAL || AXIS3_ENCODER == VIRTUAL || \
     AXIS4_ENCODER == VIRTUAL || AXIS5_ENCODER == VIRTUAL || AXIS6_ENCODER == VIRTUAL || \
@@ -10,7 +10,7 @@
 class VirtualEnc : public Encoder {
   public:
     VirtualEnc(int16_t axis);
-    void init();
+    bool init();
 
     int32_t read();
     void write(int32_t count);

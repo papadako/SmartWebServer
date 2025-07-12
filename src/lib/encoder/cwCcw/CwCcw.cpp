@@ -61,8 +61,8 @@ CwCcw::CwCcw(int16_t cwPin, int16_t ccwPin, int16_t axis) {
   this->axis = axis - 1;
 }
 
-void CwCcw::init() {
-  if (initialized) { VF("WRN: Encoder CwCcw"); V(axis); VLF(" init(), already initialized!"); return; }
+bool CwCcw::init() {
+  if (ready) return true;
 
   pinMode(cwPin, INPUT_PULLUP);
   pinMode(ccwPin, INPUT_PULLUP);
@@ -121,11 +121,12 @@ void CwCcw::init() {
     }
   #endif
 
-  initialized = true;
+  ready = true;
+  return true;
 }
 
 int32_t CwCcw::read() {
-  if (!initialized) { VF("WRN: Encoder CwCcw"); V(axis); VLF(" read(), not initialized!"); return 0; }
+  if (!ready) return 0;
   
   int32_t count = 0;
   noInterrupts();
@@ -136,7 +137,7 @@ int32_t CwCcw::read() {
 }
 
 void CwCcw::write(int32_t count) {
-  if (!initialized) { VF("WRN: Encoder CwCcw"); V(axis); VLF(" write(), not initialized!"); return; }
+  if (!ready) return;
 
   count -= origin;
 

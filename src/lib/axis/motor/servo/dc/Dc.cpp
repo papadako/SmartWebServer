@@ -5,6 +5,8 @@
 
 #ifdef SERVO_DC_PRESENT
 
+#include "../../../../gpioEx/GpioEx.h"
+
 #if defined(ARDUINO_TEENSY41) && defined(AXIS1_STEP_PIN) && AXIS1_STEP_PIN == 38 && defined(SERVO_ANALOG_WRITE_FREQUENCY)
   // this is only for pin 38 of a Teensy4.1
   IntervalTimer itimer4;
@@ -33,6 +35,9 @@
 ServoDc::ServoDc(uint8_t axisNumber, const ServoDcPins *Pins, const ServoDcSettings *Settings) {
   this->axisNumber = axisNumber;
 
+  strcpy(axisPrefix, " Axis_ServoDC, ");
+  axisPrefix[5] = '0' + axisNumber;
+
   this->Pins = Pins;
   enablePin = Pins->enable;
   enabledState = Pins->enabledState;
@@ -42,25 +47,26 @@ ServoDc::ServoDc(uint8_t axisNumber, const ServoDcPins *Pins, const ServoDcSetti
   model = Settings->model;
   statusMode = Settings->status;
   velocityMax = (Settings->velocityMax/100.0F)*SERVO_ANALOG_WRITE_RANGE;
+  velocityMin = velocityMax*SERVO_ANALOG_WRITE_RANGE_MIN;
   acceleration = (Settings->acceleration/100.0F)*velocityMax;
   accelerationFs = acceleration/FRACTIONAL_SEC;
 }
 
-void ServoDc::init() {
+bool ServoDc::init() {
   ServoDriver::init();
 
   // show velocity control settings
-  VF("MSG: ServoDriver"); V(axisNumber); VF(", Vmax="); V(Settings->velocityMax); VF("% power, Acceleration="); V(Settings->acceleration); VLF("%/s/s");
-  VF("MSG: ServoDriver"); V(axisNumber); VF(", AccelerationFS="); V(accelerationFs); VLF("%/s/fs");
+  VF("MSG:"); V(axisPrefix); VF("Vmax="); V(Settings->velocityMax); VF("% power, Acceleration="); V(Settings->acceleration); VLF("%/s/s");
+  VF("MSG:"); V(axisPrefix); VF("AccelerationFS="); V(accelerationFs); VLF("%/s/fs");
 
   #if DEBUG == VERBOSE
-    VF("MSG: ServoDriver"); V(axisNumber);
+    VF("MSG:"); V(axisPrefix);
     if (model == SERVO_EE) {
-      V(", pins pwm1="); if (Pins->in1 == OFF) VF("OFF"); else V(Pins->in1);
+      V("pins pwm1="); if (Pins->in1 == OFF) VF("OFF"); else V(Pins->in1);
       V(", pwm2="); if (Pins->in2 == OFF) VLF("OFF"); else VL(Pins->in2);
     } else
     if (model == SERVO_PE) {
-      V(", pins dir="); if (Pins->in1 == OFF) VF("OFF"); else V(Pins->in1);
+      V("pins dir="); if (Pins->in1 == OFF) VF("OFF"); else V(Pins->in1);
       V(", pwm="); if (Pins->in2 == OFF) VLF("OFF"); else VL(Pins->in2);
     }
   #endif
@@ -82,7 +88,7 @@ void ServoDc::init() {
 
   // set PWM frequency
   #ifdef SERVO_ANALOG_WRITE_FREQUENCY
-    VF("MSG: Servo"); V(axisNumber); VF(", setting control pins analog frequency "); VL(SERVO_ANALOG_WRITE_FREQUENCY);
+    VF("MSG:"); V(axisPrefix); VF("setting control pins analog frequency "); VL(SERVO_ANALOG_WRITE_FREQUENCY);
     #ifndef analogWritePin38
       analogWriteFrequency(Pins->in1, SERVO_ANALOG_WRITE_FREQUENCY);
     #endif
@@ -91,7 +97,7 @@ void ServoDc::init() {
 
   // set PWM bits
   #ifdef SERVO_ANALOG_WRITE_RESOLUTION
-    VF("MSG: Servo"); V(axisNumber); VF(", setting control pins analog bits "); VL(SERVO_ANALOG_WRITE_RESOLUTION);
+    VF("MSG:"); V(axisPrefix); VF("setting control pins analog bits "); VL(SERVO_ANALOG_WRITE_RESOLUTION);
     analogWriteResolution(Pins->in2, SERVO_ANALOG_WRITE_RESOLUTION);
   #endif
 
@@ -103,6 +109,8 @@ void ServoDc::init() {
   #else
     if (statusMode == HIGH) pinModeEx(faultPin, INPUT);
   #endif
+
+  return true;
 }
 
 // enable or disable the driver using the enable pin or other method
@@ -111,7 +119,7 @@ void ServoDc::enable(bool state) {
 
   enabled = state;
 
-  VF("MSG: ServoDriver"); V(axisNumber); VF(", ");
+  VF("MSG:"); V(axisPrefix);
   if (!enabled) {
     if (model == SERVO_EE) {
       VF("EE outputs off");
@@ -152,10 +160,12 @@ float ServoDc::setMotorVelocity(float velocity) {
   if (velocity > currentVelocity) {
     currentVelocity += accelerationFs;
     if (currentVelocity > velocity) currentVelocity = velocity;
+    if (currentVelocity > 0 && currentVelocity < velocityMin) currentVelocity = velocityMin;
   } else
   if (velocity < currentVelocity) {
     currentVelocity -= accelerationFs;
     if (currentVelocity < velocity) currentVelocity = velocity;
+    if (currentVelocity < 0 && currentVelocity > -velocityMin) currentVelocity = -velocityMin;
   }
   if (currentVelocity >= 0) motorDirection = DIR_FORWARD; else motorDirection = DIR_REVERSE;
 
@@ -206,8 +216,6 @@ void ServoDc::updateStatus() {
   if (statusMode == LOW || statusMode == HIGH) {
     status.fault = digitalReadEx(faultPin) == statusMode;
   }
-
-  ServoDriver::updateStatus();
 }
 
 #endif

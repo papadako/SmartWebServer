@@ -2,7 +2,7 @@
  * Title       OnStep Smart Web Server
  * by          Howard Dutton
  *
- * Copyright (C) 2016 to 2024 Howard Dutton
+ * Copyright (C) 2016 to 2025 Howard Dutton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,23 +32,25 @@
 #define Product "Smart Web Server"
 #define FirmwareVersionMajor  "2"
 #define FirmwareVersionMinor  "08"
-#define FirmwareVersionPatch  "l"
+#define FirmwareVersionPatch  "t"
 
 // Use Config.h to configure the SWS to your requirements
 
 #include "src/Common.h"
-NVS nv;
-#include "src/lib/tasks/OnTask.h"
-#include "src/libApp/cmd/Cmd.h"
-#include "src/libApp/bleGamepad/BleGamepad.h"
-#include "src/libApp/encoders/Encoders.h"
-#include "src/pages/Pages.h"
-#include "src/libApp/status/Status.h"
 
+#include "src/lib/tasks/OnTask.h"
+#include "src/lib/nv/Nv.h"
 #include "src/lib/ethernet/cmdServer/CmdServer.h"
 #include "src/lib/ethernet/webServer/WebServer.h"
 #include "src/lib/wifi/cmdServer/CmdServer.h"
 #include "src/lib/wifi/webServer/WebServer.h"
+
+#include "src/libApp/cmd/Cmd.h"
+#include "src/libApp/bleGamepad/BleGamepad.h"
+#include "src/libApp/encoders/Encoders.h"
+#include "src/libApp/status/Status.h"
+
+#include "src/pages/Pages.h"
 
 #if DEBUG == PROFILER
   extern void profiler();
@@ -118,7 +120,7 @@ void setup(void) {
   // call hardware specific initialization
   VLF("MSG: Init HAL");
   HAL_INIT();
-  HAL_NV_INIT();
+  nv.init();
 
   #if LED_STATUS != OFF
     pinMode(LED_STATUS_PIN, OUTPUT);

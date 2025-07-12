@@ -2,19 +2,21 @@
 // Handle encoders, both CW/CCW and Quadrature A/B types are supported
 
 #include "Encoders.h"
-extern NVS nv;
 
-#include "../status/Status.h"
-#include "../cmd/Cmd.h"
 #include "../../lib/tasks/OnTask.h"
-#include "../../lib/convert/Convert.h"
-#include "../misc/Misc.h"
-
-#if defined(ESP8266) || defined(ESP32)
-  #include <Esp.h>
-#endif
+#include "../../lib/nv/Nv.h"
 
 #if ENCODERS == ON
+  #include "../../lib/convert/Convert.h"
+
+  #include "../status/Status.h"
+  #include "../cmd/Cmd.h"
+  #include "../misc/Misc.h"
+
+  #if defined(ESP8266) || defined(ESP32)
+    #include <Esp.h>
+  #endif
+
   // bring in support for the various encoder types
   #include "../../lib/encoder/quadrature/Quadrature.h"
   #include "../../lib/encoder/quadratureEsp32/QuadratureEsp32.h"
@@ -40,6 +42,8 @@ extern NVS nv;
     Jtw24 encAxis1(AXIS1_ENCODER_A_PIN, AXIS1_ENCODER_B_PIN, 1);
   #elif AXIS1_ENCODER == JTW_26BIT
     Jtw26 encAxis1(AXIS1_ENCODER_A_PIN, AXIS1_ENCODER_B_PIN, 1);
+  #elif AXIS1_ENCODER == LIKA_ASC85
+    LikaAsc85 encAxis1(AXIS1_ENCODER_A_PIN, AXIS1_ENCODER_B_PIN, 1);
   #endif
 
   #if AXIS2_ENCODER == AB
@@ -56,9 +60,10 @@ extern NVS nv;
     Jtw24 encAxis2(AXIS2_ENCODER_A_PIN, AXIS2_ENCODER_B_PIN, 2);
   #elif AXIS2_ENCODER == JTW_26BIT
     Jtw26 encAxis2(AXIS2_ENCODER_A_PIN, AXIS2_ENCODER_B_PIN, 2);
+  #elif AXIS2_ENCODER == LIKA_ASC85
+    LikaAsc85 encAxis2(AXIS2_ENCODER_A_PIN, AXIS2_ENCODER_B_PIN, 2);
   #endif
 #endif
-
 
 // ----------------------------------------------------------------------------------------------------------------
 // background process position/rate control for encoders 

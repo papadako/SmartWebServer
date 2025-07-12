@@ -5,28 +5,15 @@
 
 #ifdef SERVO_MOTOR_PRESENT
 
-#include "../../../encoder/bissc/As37h39bb.h"
-#include "../../../encoder/bissc/Jtw24.h"
-#include "../../../encoder/bissc/Jtw26.h"
-#include "../../../encoder/cwCcw/CwCcw.h"
-#include "../../../encoder/pulseDir/PulseDir.h"
-#include "../../../encoder/pulseOnly/PulseOnly.h"
-#include "../../../encoder/virtualEnc/VirtualEnc.h"
-#include "../../../encoder/quadrature/Quadrature.h"
-#include "../../../encoder/quadratureEsp32/QuadratureEsp32.h"
-#include "../../../encoder/serialBridge/SerialBridge.h"
-
-#include "filters/Kalman.h"
-#include "filters/Learning.h"
-#include "filters/Rolling.h"
-#include "filters/Windowing.h"
+#include "../../../encoder/Encoder.h"
+#include "filter/Filter.h"
+#include "feedback/Feedback.h"
 
 #include "dc/Dc.h"
 #include "tmc2209/Tmc2209.h"
 #include "tmc5160/Tmc5160.h"
 #include "dcTmcSPI/DcTmcSPI.h"
-
-#include "feedback/Pid/Pid.h"
+#include "kTech/KTech.h"
 
 #ifndef SERVO_SLEW_DIRECT
   #define SERVO_SLEW_DIRECT OFF
@@ -78,17 +65,17 @@ class ServoMotor : public Motor {
     // sets up the servo motor
     bool init();
 
-    // set motor reverse state
-    void setReverse(int8_t state);
-
     // get driver type code
     inline char getParameterTypeCode() { return feedback->getParameterTypeCode(); }
 
     // set motor parameters
-    void setParameters(float param1, float param2, float param3, float param4, float param5, float param6);
+    bool setParameters(float param1, float param2, float param3, float param4, float param5, float param6);
 
     // validate motor parameters
     bool validateParameters(float param1, float param2, float param3, float param4, float param5, float param6);
+
+    // set motor reverse state
+    void setReverse(int8_t state);
 
     // sets motor enable on/off (if possible)
     void enable(bool value);
@@ -120,8 +107,24 @@ class ServoMotor : public Motor {
     // set slewing state (hint that we are about to slew or are done slewing)
     void setSlewing(bool state);
 
+    #ifdef ABSOLUTE_ENCODER_CALIBRATION
+      void calibrate(float value);
+    #endif
+
+    // calibrate the motor driver
+    void calibrateDriver() { if (ready) driver->calibrateDriver(); }
+
     // get encoder count
-    int32_t getEncoderCount() { return encoder->count; }
+    int32_t getEncoderCount() { if (ready) return encoder->count; else return 0; }
+
+    // set zero of absolute encoders
+    uint32_t encoderZero();
+
+    // set origin of absolute encoders
+    void encoderSetOrigin(uint32_t origin) { if (ready) encoder->setOrigin(origin); }
+
+    // read encoder
+    int32_t encoderRead();
 
     // updates PID and sets servo motor power/direction
     void poll();
@@ -129,22 +132,6 @@ class ServoMotor : public Motor {
     // sets dir as required and moves coord toward target at setFrequencySteps() rate
     void move();
     
-  #ifdef ABSOLUTE_ENCODER_CALIBRATION
-    void calibrate(float value);
-  #endif
-
-    // calibrate the motor driver
-    void calibrateDriver() { driver->calibrateDriver(); }
-
-    // set zero of absolute encoders
-    uint32_t encoderZero();
-
-    // set origin of absolute encoders
-    void encoderSetOrigin(uint32_t origin) { encoder->setOrigin(origin); }
-
-    // read encoder
-    int32_t encoderRead();
-
     // servo motor driver
     ServoDriver *driver;
 
@@ -182,8 +169,6 @@ class ServoMotor : public Motor {
 
     Filter *filter;
 
-    char axisPrefixWarn[16];            // additional prefix for debug messages
-
     float velocityEstimate = 0.0F;
     float velocityOverride = 0.0F;
 
@@ -218,10 +203,12 @@ class ServoMotor : public Motor {
     bool slewing = false;
     bool motorStepsInitDone = false;
     bool homeSet = false;
+    uint32_t encoderOrigin = 0;
     bool encoderReverse = false;
     bool encoderReverseDefault = false;
     bool wasAbove33 = false;
     bool wasBelow33 = false;
+    bool safetyShutdown = false;
     long lastTargetDistance = 0;
 };
 
